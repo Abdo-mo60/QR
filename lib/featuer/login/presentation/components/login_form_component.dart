@@ -26,7 +26,7 @@ class _LoginState extends State<Login> {
       children: [
         CustomTextField(
           controller:widget.email!,
-          hint: 'Enter your Emai',
+          hint: 'Enter your Email',
           labelText: 'Enter your Email',
           validator: (value){
             if (value == null || value.isEmpty) {

@@ -1,16 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:qr/core/utlis/router.dart';
 
 class Heder extends StatelessWidget {
   final Widget? body;
-  const Heder({super.key, this.body, this.image});
+  const Heder({super.key, this.body, this.image, this.icon, });
   final image;
+   final IconData? icon; 
+
   @override
   Widget build(BuildContext context) {
     return Container(
+     
       color: Colors.black,
       child: Column(
         children: [
-          SizedBox(height: 120),
+          SizedBox(height: 120,
+          child: Align(
+            alignment: AlignmentGeometry.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20, right: 20, left: 20),
+              child: GestureDetector(
+                  onTap: (){
+                    context.go(AppRouter.kLoginView);
+                  },
+                  child: Icon(
+                    icon ?? Icons.login_outlined, 
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+            ),
+          )
+          
+          ),
+          
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -39,7 +63,7 @@ class Heder extends StatelessWidget {
 
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Image.asset(image),
+                      child: GestureDetector(child: Image.asset(image)),
                     ),
                   ),
                   SizedBox(height: 50),
