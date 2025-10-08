@@ -15,7 +15,7 @@ class ScanMy extends StatelessWidget {
            mainAxisSize: MainAxisSize.min,
            children: [
              CustomButton(
-               text: ' Open Camera',
+               text: ' OpenCamera',
                onPressed: () {
                  Navigator.of(context).push(
                    MaterialPageRoute(builder: (ctx) => const ScanPage()),
@@ -26,7 +26,6 @@ class ScanMy extends StatelessWidget {
              CustomButton(
                text: 'Result Scan',
                onPressed: () {
-                
                  Navigator.of(context).push(
                    MaterialPageRoute(builder: (ctx) => const ResultScanView()),
                  );

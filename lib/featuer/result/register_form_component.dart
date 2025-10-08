@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:qr/core/helper/result_card.dart';
 import 'package:qr/core/utlis/assets.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,52 +9,78 @@ import 'package:url_launcher/url_launcher.dart';
 class ResultComponents extends StatelessWidget {
   const ResultComponents({super.key});
 
+  // 🔹 نعتبر أي نص فيه نقطة على الأقل كأنه رابط
   bool _isURL(String text) {
-    final uri = Uri.tryParse(text);
-    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+    final regex = RegExp(r'^(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}');
+    return regex.hasMatch(text);
   }
 
-  void _openURL(String url) async {
-    final uri = Uri.parse(url);
+  // 🔹 محاولة فتح الرابط مهما كان شكله
+  Future<void> _openURL(String text) async {
+    String fixedUrl = text.trim();
+
+    // لو الرابط مش بيبدأ بـ http نضيفه تلقائيًا
+    if (!fixedUrl.startsWith('http://') && !fixedUrl.startsWith('https://')) {
+      fixedUrl = 'https://$fixedUrl';
+    }
+
+    final uri = Uri.tryParse(fixedUrl);
+
+    if (uri == null) {
+      debugPrint('❌ Invalid URI: $fixedUrl');
+      return;
+    }
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      debugPrint('Could not launch $url');
+      debugPrint('❌ Could not launch $fixedUrl');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 400,
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection("users")
-            .doc(FirebaseAuth.instance.currentUser!.uid)
-            .collection("scans")
-            .snapshots(),
-            
-           
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("users")
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection("scans")
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No scans yet"));
+        }
 
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No scans yet"));
-          }
+        final docs = snapshot.data!.docs;
 
-          final docs = snapshot.data!.docs;
-
-          return ListView.builder(
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: ListView.builder(
+                //   
+            shrinkWrap: true, // مهم جدًا مع SingleChildScrollView
+                //    physics: const NeverScrollableScrollPhysics(), // علشان ما يحصلش تعارض في السكرول
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
               final result = data["result"] ?? "";
               final isLink = _isURL(result);
-
+          
               return GestureDetector(
-                onTap: isLink ? () => _openURL(result) : null,
+                onTap: () async {
+                  if (isLink) {
+                    print('🔗 Trying to open: $result');
+                    await _openURL(result);
+                  } else {
+                    await Clipboard.setData(ClipboardData(text: result));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Copied to clipboard')),
+                    );
+                    print('📋 Copied: $result');
+                  }
+                },
                 child: ResultCard(
                   resulttext: result,
                   image: AssetsData.p32,
@@ -61,9 +88,9 @@ class ResultComponents extends StatelessWidget {
                 ),
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

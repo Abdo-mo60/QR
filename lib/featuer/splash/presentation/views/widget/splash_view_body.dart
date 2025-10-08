@@ -1,15 +1,13 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr/core/utlis/router.dart';
+import 'package:qr/core/utlis/style.dart';
 
 import '../../../../../core/utlis/assets.dart';
 
-//import '../../../../home/presentation/views/home_view.dart' show HomeView;
-
 class SplashViewbody extends StatefulWidget {
-  const SplashViewbody({Key? key}) : super(key: key);
+  const SplashViewbody({super.key});
 
   @override
   State<SplashViewbody> createState() => _SplashViewbodyState();
@@ -19,54 +17,71 @@ class _SplashViewbodyState extends State<SplashViewbody>
     with SingleTickerProviderStateMixin {
   late AnimationController animationController;
   late Animation<Offset> slidingAnimation;
+  late Animation<double> fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    initSlidingAnimation();
+    initAnimations();
     navigateToHome();
-
-    // navigateToHome();
   }
 
   @override
   void dispose() {
-    super.dispose();
-
     animationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SvgPicture.asset(AssetsData.qr),
-        const SizedBox(height: 4),
-       
-      ],
+    return Scaffold(
+      body: Center(
+        child: FadeTransition(
+          opacity: fadeAnimation,
+          child: SlideTransition(
+            position: slidingAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset(AssetsData.qr, width: 150, height: 150),
+                const SizedBox(height: 16),
+                Text(
+                  "QR Scanner",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Styles.kPrimaryColor,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  void initSlidingAnimation() {
+  void initAnimations() {
     animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 2),
     );
 
-    slidingAnimation = Tween<Offset>(
-      begin: const Offset(0, 2),
-      end: Offset.zero,
-    ).animate(animationController);
+    slidingAnimation =
+        Tween<Offset>(begin: const Offset(0, 2), end: Offset.zero).animate(
+          CurvedAnimation(parent: animationController, curve: Curves.easeOut),
+        );
+
+    fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: animationController, curve: Curves.easeIn),
+    );
 
     animationController.forward();
   }
 
   void navigateToHome() {
-    Future.delayed(Duration(seconds: 3), () {
-      
-
+    Future.delayed(const Duration(seconds: 3), () {
       GoRouter.of(context).push(AppRouter.kLoginView);
     });
   }

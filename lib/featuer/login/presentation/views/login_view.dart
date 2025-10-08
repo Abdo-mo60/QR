@@ -12,7 +12,7 @@ import 'package:qr/featuer/login/presentation/components/login_form_component.da
 import 'package:qr/featuer/login/presentation/widget/heder_login_widget.dart';
 
 class LoginHome extends StatefulWidget {
-  LoginHome({super.key});
+  const LoginHome({super.key});
 
   @override
   State<LoginHome> createState() => _LoginHomeState();
